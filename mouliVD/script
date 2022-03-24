@@ -1,0 +1,459 @@
+#!/bin/python3
+
+from moulitek.moulitek import *
+import subprocess
+import os
+init_moulitek()
+def read(path):
+    f = open(path, "r")
+    content = f.read()
+    f.close()
+    return content
+
+class test:
+    def __init__(self):
+        self.id = None
+        self.name = None
+        self.calcul = None
+        self.completed = None
+        self.expected = None
+        self.expected_return = 0
+        self.got = None
+        self.got_return = 0
+
+if os.path.isfile('eval_expr') == False:
+    print("file does not exists")
+
+tests = []
+moyenne = 0
+test_nb = 20
+
+for i in range(20):
+    tests.append(test())
+    tests[i].id = i
+    tests[i].completed = False
+
+tests[0].name = "Simple multiplication"
+tests[0].calcul = "\"22 * 5\""
+tests[0].expected = "110\n"
+
+tests[1].name = "Simple Division"
+tests[1].calcul = "\" 85 / 5\""
+tests[1].expected = "17\n"
+
+tests[2].name = "Order of priority - parenthesis"
+tests[2].calcul = "\"(5 * 2) - 7\""
+tests[2].expected = "3\n"
+
+tests[3].name = "Order of priority - signs"
+tests[3].calcul = "\"35 + 12 * 2\""
+tests[3].expected = "59\n"
+
+tests[4].name = "Signs calculs"
+tests[4].calcul = "\"-5 - ----12 + --20 + 30 - 30 -- 40 + 270 - 20\""
+tests[4].expected = "293\n"
+
+tests[5].name = "full calcul 1"
+tests[5].calcul = "\"(23 + 10) * 100 - 450 * 2\""
+tests[5].expected = "2400\n"
+
+tests[6].name = "full calcul 2"
+tests[6].calcul = "\"274 * 25 / (25) - 2 * 130 / 2 + 4\""
+tests[6].expected = "148\n"
+
+tests[7].name = "full calcul 3"
+tests[7].calcul = "\"(18 * 93) - 482 + (94 * 39) +43 - 89 + 88 * (917) - 439 + 783 - 94\""
+tests[7].expected = "85758\n"
+
+tests[8].name = "full calcul 4"
+tests[8].calcul = "\"(19 + 20 * (84 - 92) + 08 * 19 * (23 - 891) + 083) - 981\""
+tests[8].expected = "-132975\n"
+
+tests[9].name = "full calcul 5"
+tests[9].calcul = "\"9+ 0 * (83- 298) *91 - 82 * 93 + 10 * 89 + 100 / 10 + 1038\""
+tests[9].expected = "-5679\n"
+
+tests[10].name = "full calcul 6"
+tests[10].calcul = "\"19 + 32 * 98 - (19 + 8) * 319 + 083- 19 + --1\""
+tests[10].expected = "-5395\n"
+
+tests[11].name = "full calcul 7"
+tests[11].calcul = "\"(19 * 28 - 3 * (92 - 093 * 1) * 78 - 8) * 0 + 31\""
+tests[11].expected = "31\n"
+
+tests[12].name = "full calcul 8"
+tests[12].calcul = "\"(129 + 8219 - 82) + (91 + -81 - 92 + 89)182 * 91 * (82 - 981 + 29 / 1) * 2\""
+tests[12].expected = "-201716894\n"
+
+tests[13].name = "full calcul 9"
+tests[13].calcul = "\"(18 * 93) - 482 + (94 * 39) +43 - 89 + 88 * (917) - 439 + 783 - 94\""
+tests[13].expected = "85758\n"
+
+tests[14].name = "full calcul 10"
+tests[14].calcul = "\"(19 + 20 * (84 - 92) + 08 * 19 * (23 - 891) + 083) - 981\""
+tests[14].expected = "-132975\n"
+
+tests[15].name = "full calcul 11"
+tests[15].calcul = "\"9+ 0 * (83- 298) *91 - 82 * 93 + 10 * 89 + 100 / 10 + 1038\""
+tests[15].expected = "-5679\n"
+
+tests[16].name = "full calcul 12"
+tests[16].calcul = "\"19 + 32 * 98 - (19 + 8) * 319 + 083- 19 + --1\""
+tests[16].expected = "-5395\n"
+
+tests[17].name = "full calcul 13"
+tests[17].calcul = "\"623 + (78 * 76 - 73(89 + 27) * 83 - 293) * 27\""
+tests[17].expected = "-18824020\n"
+
+tests[18].name = "full calcul 14"
+tests[18].calcul = "\"19 * (39 - 02) + 889 + 38 / 1 * 93 - 819 + 3189 * 83 - 19\""
+tests[18].expected = "268975\n"
+
+tests[19].name = "error handling - two many arguments"
+tests[19].calcul = "\"(19 + 20\" \"*\" \"(84 - 92)\""
+tests[19].expected = ""
+tests[19].expected_return = -84
+
+for i in range(len(tests)):
+    arg = "timeout 3s ./eval_expr " + tests[i].calcul + " > trace"
+    result = subprocess.call(arg, shell=True)
+    content = read("trace")
+    tests[i].got = content
+    tests[i].got_return = result
+    if ((content != tests[i].expected or result != tests[i].expected_return) and tests[i].expected_return == 0):
+        tests[i].completed = False
+    else:
+        tests[i].completed = True
+
+subprocess.call("rm trace", shell=True)
+
+test = Category("eval_expr", "eval_expr")
+
+## TEST 1  - Multiplication ##
+
+seq1 = test.add_sequence("Test01", "Multiplication")
+
+cause = ""
+i = 0;
+
+seq1.add_test("Simple multiplication", "")    
+if (tests[i].got_return == 124):
+    cause = TIMEOUT
+if (tests[i].got_return == 139):
+    cause = SEGFAULT
+if (tests[i].got_return == 0 and tests[0].completed == False):
+    cause = BADOUTPUT
+else:
+    cause = RETVALUE
+seq1.set_status("Simple multiplication", passed = tests[i].completed, reason = cause, expected = tests[i].expected, got = tests[i].got)
+
+i += 1
+
+## TEST 2 - Division ##
+
+seq2 = test.add_sequence("Test02", "Division")
+
+cause = ""
+
+seq2.add_test("Simple division", "")
+if (tests[i].got_return == 124):
+    cause = TIMEOUT
+if (tests[i].got_return == 139):
+    cause = SEGFAULT
+if (tests[i].got_return == 0 and  tests[i].completed == False):
+    cause = BADOUTPUT
+else:
+    cause = RETVALUE
+seq2.set_status("Simple division", passed = tests[i].completed, reason = cause, expected = tests[i].expected, got = tests[i].got)
+
+i += 1
+
+## TEST 3 - Order of priority
+
+seq3 = test.add_sequence("Test03", "Order of priority")
+
+cause = ""
+
+seq3.add_test("Order of priority - parenthesis", "")
+if (tests[i].got_return == 124):
+    cause = TIMEOUT
+if (tests[i].got_return == 139):
+    cause = SEGFAULT
+if (tests[i].got_return == 0 and tests[i].completed == False):
+    cause = BADOUTPUT
+else:
+    cause = RETVALUE
+seq3.set_status("Order of priority - parenthesis", passed = tests[i].completed, reason = cause, expected = tests[i].expected, got = tests[i].got)
+
+i += 1
+
+cause = ""
+
+seq3.add_test("Order of priority - signs", "")
+if (tests[i].got_return == 124):
+    cause = TIMEOUT
+if (tests[i].got_return == 139):
+    cause = SEGFAULT
+if (tests[i].got_return == 0 and tests[i].completed == False):
+    cause = BADOUPUT
+else:
+    cause = RETVALUE
+seq3.set_status("Order of priority - signs", passed = tests[i].completed, reason = cause, expected = tests[i].expected, got = tests[i].got)
+
+i += 1
+
+## TEST 4 - Signs calculs ##
+
+seq4 = test.add_sequence("Test04", "Signs calculs")
+
+cause = ""
+
+seq4.add_test("Signs calculs", "")
+if (tests[i].got_return == 124):
+    cause = TIMEOUT
+if (tests[i].got_return == 139):
+    cause = SEGFAULT
+if (tests[i].got_return == 0 and tests[i].completed == False):
+    cause = BADOUTPUT
+else:
+    cause = RETVALUE
+seq4.set_status("Signs calculs", passed = tests[i].completed, reason = cause, expected = tests[i].expected, got = tests[i].got)
+
+i += 1
+
+## TEST 5 - Full Calculs ##
+
+seq5 = test.add_sequence("Test05", "Full calculs")
+
+cause = ""
+
+seq5.add_test("full calcul 1", "")
+if (tests[i].got_return == 124):
+    cause = TIMEOUT
+if (tests[i].got_return == 139):
+    cause = SEGFAULT
+if (tests[i].got_return == 0 and tests[i].completed == False):
+    cause = BADOUTPUT
+else:
+    cause = RETVALUE
+seq5.set_status("full calcul 1", passed = tests[i].completed, reason = cause, expected = tests[i].expected, got = tests[i].got)
+
+i += 1
+
+cause = ""
+
+seq5.add_test("full calcul 2", "")
+if (tests[i].got_return == 124):
+    cause = TIMEOUT
+if (tests[i].got_return == 139):
+    cause = SEGFAULT
+if (tests[i].got_return == 0 and tests[i].completed == False):
+    cause = BADOUTPUT
+else:
+    cause = RETVALUE
+seq5.set_status("full calcul 2", passed = tests[i].completed, reason = cause, expected = tests[i].expected, got = tests[i].got)
+
+i += 1
+
+cause = ""
+
+seq5.add_test("full calcul 3", "")
+if (tests[i].got_return == 124):
+    cause = TIMEOUT
+if (tests[i].got_return == 139):
+    cause = SEGFAULT
+if (tests[i].got_return == 0 and tests[i].completed == False):
+    cause = BADOUTPUT
+else:
+    cause = RETVALUE
+seq5.set_status("full calcul 3", passed = tests[i].completed, reason = cause, expected = tests[i].expected, got = tests[i].got)
+
+i += 1
+
+cause = ""
+
+seq5.add_test("full calcul 4", "")
+if (tests[i].got_return == 124):
+    cause = TIMEOUT
+if (tests[i].got_return == 139):
+    cause = SEGFAULT
+if (tests[i].got_return == 0 and tests[i].completed == False):
+    cause = BADOUTPUT
+else:
+    cause = RETVALUE
+seq5.set_status("full calcul 4", passed = tests[i].completed, reason = cause, expected = tests[i].expected, got = tests[i].got)
+
+i += 1
+
+cause = ""
+
+seq5.add_test("full calcul 5", "")
+if (tests[i].got_return == 124):
+    cause = TIMEOUT
+if (tests[i].got_return == 139):
+    cause = SEGFAULT
+if (tests[i].got_return == 0 and tests[i].completed == False):
+    cause = BADOUTPUT
+else:
+    cause = RETVALUE
+seq5.set_status("full calcul 5", passed = tests[i].completed, reason = cause, expected = tests[i].expected, got = tests[i].got)
+
+i += 1
+
+cause = ""
+
+seq5.add_test("full calcul 6", "")
+if (tests[i].got_return == 124):
+    cause = TIMEOUT
+if (tests[i].got_return == 139):
+    cause = SEGFAULT
+if (tests[i].got_return == 0 and tests[i].completed == False):
+    cause = BADOUTPUT
+else:
+    cause = RETVALUE
+seq5.set_status("full calcul 6", passed = tests[i].completed, reason = cause, expected = tests[i].expected, got = tests[i].got)
+
+i += 1
+
+cause = ""
+
+seq5.add_test("full calcul 7", "")
+if (tests[i].got_return == 124):
+    cause = TIMEOUT
+if (tests[i].got_return == 139):
+    cause = SEGFAULT
+if (tests[i].got_return == 0 and tests[i].completed == False):
+    cause = BADOUTPUT
+else:
+    cause = RETVALUE
+seq5.set_status("full calcul 7", passed = tests[i].completed, reason = cause, expected = tests[i].expected, got = tests[i].got)
+
+i += 1
+
+cause = ""
+
+seq5.add_test("full calcul 8", "")
+if (tests[i].got_return == 124):
+    cause = TIMEOUT
+if (tests[i].got_return == 139):
+    cause = SEGFAULT
+if (tests[i].got_return == 0 and tests[i].completed == False):
+    cause = BADOUTPUT
+else:
+    cause = RETVALUE
+seq5.set_status("full calcul 8", passed = tests[i].completed, reason = cause, expected = tests[i].expected, got = tests[i].got)
+
+i += 1
+
+cause = ""
+
+seq5.add_test("full calcul 9", "")
+if (tests[i].got_return == 124):
+    cause = TIMEOUT
+if (tests[i].got_return == 139):
+    cause = SEGFAULT
+if (tests[i].got_return == 0 and tests[i].completed == False):
+    cause = BADOUTPUT
+else:
+    cause = RETVALUE
+seq5.set_status("full calcul 9", passed = tests[i].completed, reason = cause, expected = tests[i].expected, got = tests[i].got)
+
+i += 1
+
+cause = ""
+
+seq5.add_test("full calcul 10", "")
+if (tests[i].got_return == 124):
+    cause = TIMEOUT
+if (tests[i].got_return == 139):
+    cause = SEGFAULT
+if (tests[i].got_return == 0 and tests[i].completed == False):
+    cause = BADOUTPUT
+else:
+    cause = RETVALUE
+seq5.set_status("full calcul 10", passed = tests[i].completed, reason = cause, expected = tests[i].expected, got = tests[i].got)
+
+i += 1
+
+cause = ""
+
+seq5.add_test("full calcul 11", "")
+if (tests[i].got_return == 124):
+    cause = TIMEOUT
+if (tests[i].got_return == 139):
+    cause = SEGFAULT
+if (tests[i].got_return == 0 and tests[i].completed == False):
+    cause = BADOUTPUT
+else:
+    cause = RETVALUE
+seq5.set_status("full calcul 11", passed = tests[i].completed, reason = cause, expected = tests[i].expected, got = tests[i].got)
+
+i += 1
+
+cause = ""
+
+seq5.add_test("full calcul 12", "")
+if (tests[i].got_return == 124):
+    cause = TIMEOUT
+if (tests[i].got_return == 139):
+    cause = SEGFAULT
+if (tests[i].got_return == 0 and tests[i].completed == False):
+    cause = BADOUTPUT
+else:
+    cause = RETVALUE
+seq5.set_status("full calcul 12", passed = tests[i].completed, reason = cause, expected = tests[i].expected, got = tests[i].got)
+
+i += 1
+
+cause = ""
+
+seq5.add_test("full calcul 13", "")
+if (tests[i].got_return == 124):
+    cause = TIMEOUT
+if (tests[i].got_return == 139):
+    cause = SEGFAULT
+if (tests[i].got_return == 0 and tests[i].completed == False):
+    cause = BADOUTPUT
+else:
+    cause = RETVALUE
+seq5.set_status("full calcul 13", passed = tests[i].completed, reason = cause, expected = tests[i].expected, got = tests[i].got)
+
+i += 1
+
+cause = ""
+
+seq5.add_test("full calcul 14", "")
+if (tests[i].got_return == 124):
+    cause = TIMEOUT
+if (tests[i].got_return == 139):
+    cause = SEGFAULT
+if (tests[i].got_return == 0 and tests[i].completed == False):
+    cause = BADOUTPUT
+else:
+    cause = RETVALUE
+seq5.set_status("full calcul 14", passed = tests[i].completed, reason = cause, expected = tests[i].expected, got = tests[i].got)
+
+i += 1
+
+
+# TEST 6 - Error handling ##
+
+seq6 = test.add_sequence("Test06", "Error handling")
+
+cause = ""
+
+seq6.add_test("error handling - two many arguments", "")
+if (tests[i].got_return == 124):
+    cause = TIMEOUT
+if (tests[i].got_return == 139):
+    cause = SEGFAULT
+if (tests[i].got_return == 0 and tests[i].completed == False):
+    cause = BADOUTPUT
+if (tests[i].got_return != 0 and tests[i].completed == False):
+    cause = RETVALUE
+seq6.set_status("error handling - two many arguments", passed = tests[i].completed, reason = cause, expected = tests[i].expected, got = tests[i].got)
+
+i += 1
+
+
+gen_trace()
